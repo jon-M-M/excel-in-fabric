@@ -22,8 +22,8 @@ together and spin it up in your own tenant.
   through a Rayfin semantic model connector. The user's permissions on the model, including any row-level security,
   apply. No extracts, no copies.
 - **An Excel-like sheet**, built by hand in React (no grid or spreadsheet library): ribbon, formula bar, cell
-  selection, column resize, fill handle, point-and-click references in formulas, sort, AutoSum, and a status bar
-  with Average / Count / Sum.
+  selection, column resize, fill handle, point-and-click references in formulas, sort, AutoSum, Excel's
+  Ctrl+arrow / Ctrl+Home / Ctrl+End shortcuts (with Shift to select), and a status bar with Average / Count / Sum.
 - **Formulas**: `SUM`, `AVERAGE`, `MIN`, `MAX`, `COUNT`, `+ - * /`, parentheses, cell references (`A1`) and ranges
   (`A1:B10`), with Excel-style errors such as `#DIV/0!`.
 - **Real files in and out.** File → Export writes an `.xlsx` with [ExcelJS](https://github.com/exceljs/exceljs)
