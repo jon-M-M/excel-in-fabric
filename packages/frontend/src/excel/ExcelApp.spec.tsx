@@ -10,8 +10,20 @@ const northSouth2026 = launch({ region: ['North', 'South'], year: [2026] });
 const dialog = () => screen.findByRole('alertdialog', { name: 'Microsoft Excel' });
 
 describe('ExcelApp', () => {
+  it('keeps the splash up until the data has loaded', async () => {
+    let resolve: (value: Awaited<ReturnType<HandoffDeps['runQuery']>>) => void = () => {};
+    const runQuery = () => new Promise<Awaited<ReturnType<HandoffDeps['runQuery']>>>((r) => (resolve = r));
+    render(<ExcelApp deps={deps({ launchState: northSouth2026, runQuery })} />);
+    expect(screen.getByRole('status', { name: 'Starting Excel in Fabric' })).toHaveTextContent('Opening your data…');
+    expect(screen.queryByRole('grid')).not.toBeInTheDocument();
+    resolve(await ok([chainRow]));
+    await waitFor(() => expect(screen.getByRole('gridcell', { name: 'D2' })).toHaveTextContent('Chain'));
+    expect(screen.queryByRole('status', { name: 'Starting Excel in Fabric' })).not.toBeInTheDocument();
+  });
+
   it('shows the Excel chrome', async () => {
     render(<ExcelApp deps={deps({ launchState: northSouth2026 })} />);
+    await screen.findByRole('grid');
     for (const name of ['File', 'Home', 'Insert', 'Page Layout', 'Formulas', 'Data', 'Review', 'View']) {
       expect(screen.getByRole('tab', { name })).toBeInTheDocument();
     }
@@ -22,11 +34,13 @@ describe('ExcelApp', () => {
 
   it('titles the workbook after the filters', async () => {
     render(<ExcelApp deps={deps({ launchState: northSouth2026 })} />);
+    await screen.findByRole('grid');
     expect(await screen.findByText('sales_north_south_2026 - Excel in Fabric')).toBeInTheDocument();
   });
 
   it('loads the rows into the sheet', async () => {
     render(<ExcelApp deps={deps({ launchState: northSouth2026 })} />);
+    await screen.findByRole('grid');
     await waitFor(() =>
       expect(screen.getByRole('gridcell', { name: 'D2' })).toHaveTextContent('Chain')
     );
@@ -68,6 +82,7 @@ describe('ExcelApp', () => {
 
   it('AutoSum from the ribbon', async () => {
     render(<ExcelApp deps={deps({ launchState: northSouth2026 })} />);
+    await screen.findByRole('grid');
     await waitFor(() =>
       expect(screen.getByRole('gridcell', { name: 'D2' })).toHaveTextContent('Chain')
     );
@@ -76,16 +91,18 @@ describe('ExcelApp', () => {
     expect(screen.getByRole('gridcell', { name: 'F3' })).toHaveTextContent('90');
   });
 
-  it('inert tabs say so', () => {
+  it('inert tabs say so', async () => {
     render(<ExcelApp deps={deps({ launchState: northSouth2026 })} />);
+    await screen.findByRole('grid');
     expect(screen.getByRole('tab', { name: 'Insert' })).toHaveAttribute(
       'title',
       'Available in Excel in Fabric Pro'
     );
   });
 
-  it('ribbon buttons leave the keyboard on the sheet', () => {
+  it('ribbon buttons leave the keyboard on the sheet', async () => {
     render(<ExcelApp deps={deps({ launchState: northSouth2026 })} />);
+    await screen.findByRole('grid');
     for (const name of ['AutoSum', 'Sort A to Z', 'Sort Z to A']) {
       // A cancelled mousedown means the button never takes focus from the grid.
       expect(fireEvent.mouseDown(screen.getByRole('button', { name }))).toBe(false);
@@ -94,6 +111,7 @@ describe('ExcelApp', () => {
 
   it('selecting a range shows its sum', async () => {
     render(<ExcelApp deps={deps({ launchState: northSouth2026 })} />);
+    await screen.findByRole('grid');
     await waitFor(() => expect(screen.getByRole('gridcell', { name: 'F2' })).toHaveTextContent('90'));
     fireEvent.mouseDown(screen.getByRole('gridcell', { name: 'F1' }));
     fireEvent.mouseEnter(screen.getByRole('gridcell', { name: 'F2' }), { buttons: 1 });

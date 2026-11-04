@@ -521,4 +521,14 @@ describe('Grid', () => {
     act(() => grid.focus());
     expect(document.activeElement).toBe(grid);
   });
+
+  it('Ctrl+Down jumps to the bottom of the data and scrolls it into view', () => {
+    render(<Harness initial={workbook(200)} />);
+    fireEvent.mouseDown(cell('F2'));
+    fireEvent.mouseUp(window);
+    const grid = screen.getByRole('grid');
+    fireEvent.keyDown(grid, { key: 'ArrowDown', ctrlKey: true });
+    expect(screen.getByLabelText('Name Box')).toHaveTextContent('F201');
+    expect(grid.scrollTop).toBeGreaterThan(0);
+  });
 });

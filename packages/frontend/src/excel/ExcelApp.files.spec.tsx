@@ -35,6 +35,7 @@ describe('ExcelApp files', () => {
 
   it('exports the sheet as xlsx', { timeout: 20000 }, async () => {
     render(<ExcelApp deps={deps({ launchState: northSouth2026 })} />);
+    await screen.findByRole('grid');
     await screen.findByText('sales_north_south_2026 - Excel in Fabric');
     await waitFor(() => expect(screen.getByRole('gridcell', { name: 'D2' })).toHaveTextContent('Chain'));
     fireEvent.click(within(openFileMenu()).getByRole('menuitem', { name: 'Export to Excel (.xlsx)' }));
@@ -48,6 +49,7 @@ describe('ExcelApp files', () => {
 
   it('export keeps a resized column width', { timeout: 20000 }, async () => {
     render(<ExcelApp deps={deps({ launchState: northSouth2026 })} />);
+    await screen.findByRole('grid');
     await waitFor(() => expect(screen.getByRole('gridcell', { name: 'D2' })).toHaveTextContent('Chain'));
     fireEvent.mouseDown(screen.getByRole('separator', { name: 'Resize column B' }), { clientX: 100 });
     fireEvent.mouseMove(window, { clientX: 154, buttons: 1 });
@@ -63,6 +65,7 @@ describe('ExcelApp files', () => {
 
   it('opens a CSV from the File menu', async () => {
     render(<ExcelApp deps={deps({ launchState: northSouth2026 })} />);
+    await screen.findByRole('grid');
     expect(within(openFileMenu()).getByRole('menuitem', { name: 'Open CSV…' })).toBeEnabled();
     chooseFile(csvFile('Region,Sales\nNorth,100\n'));
     expect(await screen.findByText('Sales Export - Excel in Fabric', undefined, slow)).toBeInTheDocument();
@@ -82,6 +85,7 @@ describe('ExcelApp files', () => {
 
   it('opens the same file twice', async () => {
     render(<ExcelApp deps={deps({ launchState: northSouth2026 })} />);
+    await screen.findByRole('grid');
     const input = chooseFile(csvFile('Region,Sales\nNorth,100\n'));
     await screen.findByText('Sales Export - Excel in Fabric', undefined, slow);
     expect(input.value).toBe('');
@@ -89,6 +93,7 @@ describe('ExcelApp files', () => {
 
   it('shows a dialog for an empty CSV', async () => {
     render(<ExcelApp deps={deps({ launchState: northSouth2026 })} />);
+    await screen.findByRole('grid');
     chooseFile(csvFile(''));
     const dialog = await screen.findByRole('alertdialog', { name: 'Microsoft Excel' }, slow);
     expect(within(dialog).getByText('This CSV file is empty')).toBeInTheDocument();
@@ -96,6 +101,7 @@ describe('ExcelApp files', () => {
 
   it('exports a CSV under its own name', { timeout: 20000 }, async () => {
     render(<ExcelApp deps={deps({ launchState: northSouth2026 })} />);
+    await screen.findByRole('grid');
     chooseFile(csvFile('Region,Sales\nNorth,100\n'));
     await screen.findByText('Sales Export - Excel in Fabric', undefined, slow);
     fireEvent.click(within(openFileMenu()).getByRole('menuitem', { name: 'Export to Excel (.xlsx)' }));
@@ -103,21 +109,24 @@ describe('ExcelApp files', () => {
     expect(vi.mocked(downloadBlob).mock.calls[0][1]).toBe('Sales Export.xlsx');
   });
 
-  it('closes the File menu on Escape', () => {
+  it('closes the File menu on Escape', async () => {
     render(<ExcelApp deps={deps({ launchState: northSouth2026 })} />);
+    await screen.findByRole('grid');
     fireEvent.keyDown(openFileMenu(), { key: 'Escape' });
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
   });
 
-  it('closes the File menu on Escape anywhere', () => {
+  it('closes the File menu on Escape anywhere', async () => {
     render(<ExcelApp deps={deps({ launchState: northSouth2026 })} />);
+    await screen.findByRole('grid');
     openFileMenu();
     fireEvent.keyDown(document.body, { key: 'Escape' });
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
   });
 
-  it('the File menu leaves the keyboard on the sheet', () => {
+  it('the File menu leaves the keyboard on the sheet', async () => {
     render(<ExcelApp deps={deps({ launchState: northSouth2026 })} />);
+    await screen.findByRole('grid');
     expect(fireEvent.mouseDown(screen.getByRole('tab', { name: 'File' }))).toBe(false);
     for (const item of within(openFileMenu()).getAllByRole('menuitem')) {
       expect(fireEvent.mouseDown(item)).toBe(false);

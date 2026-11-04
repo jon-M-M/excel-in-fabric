@@ -37,3 +37,6 @@ fabric/_import/
 # Local worktrees and agent scratch
 .worktrees/
 .superpowers/
+
+# Screen recordings (large, local only)
+*.mp4

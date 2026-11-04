@@ -20,6 +20,38 @@ function setup() {
 }
 
 describe('useSheet', () => {
+  it('Ctrl+Down jumps to the last row of the data', () => {
+    const { result } = setup();
+    act(() => result.current.select({ col: 5, row: 0 }));
+    act(() => result.current.jump('ArrowDown', false));
+    expect(result.current.state.cursor).toEqual({ col: 5, row: 2 });
+    expect(selectionRange(result.current.state)).toEqual({ left: 5, top: 2, right: 5, bottom: 2 });
+  });
+
+  it('Ctrl+Shift+Down selects to the last row of the data', () => {
+    const { result } = setup();
+    act(() => result.current.select({ col: 5, row: 1 }));
+    act(() => result.current.jump('ArrowDown', true));
+    expect(result.current.state.cursor).toEqual({ col: 5, row: 1 });
+    expect(selectionRange(result.current.state)).toEqual({ left: 5, top: 1, right: 5, bottom: 2 });
+  });
+
+  it('Ctrl+Home goes to A1 and Ctrl+End to the last used cell', () => {
+    const { result } = setup();
+    act(() => result.current.select({ col: 2, row: 1 }));
+    act(() => result.current.jumpEnd(false));
+    expect(result.current.state.cursor).toEqual({ col: 5, row: 2 });
+    act(() => result.current.jumpHome(false));
+    expect(result.current.state.cursor).toEqual({ col: 0, row: 0 });
+  });
+
+  it('Ctrl+Shift+End selects to the last used cell', () => {
+    const { result } = setup();
+    act(() => result.current.select({ col: 1, row: 1 }));
+    act(() => result.current.jumpEnd(true));
+    expect(selectionRange(result.current.state)).toEqual({ left: 1, top: 1, right: 5, bottom: 2 });
+  });
+
   it('Escape cancels an edit', () => {
     const { result } = setup();
     act(() => result.current.select({ col: 3, row: 1 }));

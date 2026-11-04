@@ -17,6 +17,7 @@ import { FormulaBar } from './FormulaBar';
 import { Grid } from './Grid';
 import { Ribbon } from './Ribbon';
 import { StatusBar } from './StatusBar';
+import { StartupSplash } from './StartupSplash';
 import { selectionRange, useSheet } from './use-sheet';
 import './excel.css';
 
@@ -211,6 +212,8 @@ export function ExcelApp({ deps }: { deps?: Partial<HandoffDeps> }) {
     };
   }
   const { key, ...windowProps } = view;
+  // The splash stays up from sign-in until the report's rows arrive, instead of an empty sheet.
+  if (!csv && state.status === 'loading') return <StartupSplash message="Opening your data…" />;
   // A loaded CSV replaces whatever the handoff showed, including its dialogs.
   const handoffDialogs = !csv;
 

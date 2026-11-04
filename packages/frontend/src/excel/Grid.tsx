@@ -8,7 +8,7 @@ import { fillDownExtent, fillExtent } from '@/sheet/fill';
 import { isError, isFormula } from '@/sheet/formula';
 import { canPoint } from '@/sheet/point-mode';
 import { findReferences, referenceColors } from '@/sheet/references';
-import type { Cursor, MoveKey } from '@/sheet/navigation';
+import type { ArrowKey, Cursor, MoveKey } from '@/sheet/navigation';
 import { inRange, isSingleCell, type CellRange } from '@/sheet/selection';
 import { displayText, rawText } from '@/sheet/workbook';
 
@@ -20,6 +20,7 @@ import { startWindowDrag } from './window-drag';
 
 export const OVERSCAN = 10;
 const MOVE_KEYS = new Set<string>(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Tab']);
+const ARROW_KEYS = new Set<string>(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
 const COLUMNS = Array.from({ length: COLUMN_COUNT }, (_, c) => c);
 
 // Same font as .xl-cell, for auto-fitting a column to its text.
@@ -215,7 +216,15 @@ export function Grid({
   function onGridKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (editing || event.target !== event.currentTarget) return;
     const { key } = event;
-    if (MOVE_KEYS.has(key)) {
+    const ctrl = event.ctrlKey || event.metaKey;
+    if (ctrl && ARROW_KEYS.has(key)) {
+      event.preventDefault();
+      sheet.jump(key as ArrowKey, event.shiftKey);
+    } else if (ctrl && (key === 'Home' || key === 'End')) {
+      event.preventDefault();
+      if (key === 'Home') sheet.jumpHome(event.shiftKey);
+      else sheet.jumpEnd(event.shiftKey);
+    } else if (MOVE_KEYS.has(key)) {
       event.preventDefault();
       sheet.moveCursor(key as MoveKey, event.shiftKey);
     } else if (key === 'F2') {

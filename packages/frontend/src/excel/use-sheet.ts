@@ -4,10 +4,11 @@ import { useMemo, useReducer } from 'react';
 
 import { COLUMN_COUNT } from '@/sheet/address';
 import type { CellValue } from '@/sheet/formula';
-import { move, type Cursor, type MoveKey } from '@/sheet/navigation';
+import { jump, lastUsedCell, move, type ArrowKey, type Cursor, type MoveKey } from '@/sheet/navigation';
 import { fillRange } from '@/sheet/fill';
 import { insertReference, rangeText, type PointRef } from '@/sheet/point-mode';
 import { rangeBetween, type CellRange } from '@/sheet/selection';
+import { toAddress } from '@/sheet/address';
 import {
   autoSumFormula,
   clearRange,
@@ -40,6 +41,8 @@ type Action =
   | { type: 'cancelEdit' }
   | { type: 'clearSelection' }
   | { type: 'move'; key: MoveKey; shift: boolean }
+  | { type: 'jump'; key: ArrowKey; shift: boolean }
+  | { type: 'jumpTo'; target: 'home' | 'end'; shift: boolean }
   | { type: 'sort'; direction: 'asc' | 'desc' }
   | { type: 'autoSum' }
   | { type: 'resizeColumn'; col: number; width: number }
@@ -70,6 +73,13 @@ function moved(state: SheetState, key: MoveKey, shift: boolean): SheetState {
   const bounds = { cols: COLUMN_COUNT, rows: state.workbook.rowCount };
   if (shift && ARROWS.has(key)) return { ...state, focus: move(state.focus, key, false, bounds) };
   const cursor = move(state.cursor, key, shift, bounds);
+  return { ...state, cursor, focus: cursor };
+}
+
+// Ctrl+arrow, Ctrl+Home, Ctrl+End: with Shift the far corner moves and the active cell stays.
+function jumped(state: SheetState, target: (from: Cursor) => Cursor, shift: boolean): SheetState {
+  if (shift) return { ...state, focus: target(state.focus) };
+  const cursor = target(state.cursor);
   return { ...state, cursor, focus: cursor };
 }
 
@@ -114,6 +124,14 @@ function reducer(state: SheetState, action: Action): SheetState {
       return withWorkbook(state, clearRange(state.workbook, selectionRange(state)));
     case 'move':
       return moved(state, action.key, action.shift);
+    case 'jump': {
+      const { cells, rowCount } = state.workbook;
+      const filled = (col: number, row: number) => cells.has(toAddress(col, row));
+      const bounds = { cols: COLUMN_COUNT, rows: rowCount };
+      return jumped(state, (from) => jump(from, action.key, filled, bounds), action.shift);
+    }
+    case 'jumpTo':
+      return jumped(state, () => (action.target === 'home' ? START : lastUsedCell(state.workbook.cells.keys())), action.shift);
     case 'sort': {
       const base = commit(state);
       return withWorkbook(base, sortDataBlock(base.workbook, base.cursor.col, action.direction));
@@ -177,6 +195,9 @@ export function useSheet(initial: Workbook) {
       cancelEdit: () => dispatch({ type: 'cancelEdit' }),
       clearSelection: () => dispatch({ type: 'clearSelection' }),
       moveCursor: (key: MoveKey, shift: boolean) => dispatch({ type: 'move', key, shift }),
+      jump: (key: ArrowKey, shift: boolean) => dispatch({ type: 'jump', key, shift }),
+      jumpHome: (shift: boolean) => dispatch({ type: 'jumpTo', target: 'home', shift }),
+      jumpEnd: (shift: boolean) => dispatch({ type: 'jumpTo', target: 'end', shift }),
       sort: (direction: 'asc' | 'desc') => dispatch({ type: 'sort', direction }),
       autoSum: () => dispatch({ type: 'autoSum' }),
       resizeColumn: (col: number, width: number) => dispatch({ type: 'resizeColumn', col, width }),
