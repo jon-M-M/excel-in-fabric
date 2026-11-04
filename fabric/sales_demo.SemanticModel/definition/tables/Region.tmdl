@@ -1,0 +1,45 @@
+table Region
+
+	column 'City Key'
+		dataType: int64
+		formatString: 0
+		isHidden
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [City Key]
+
+	column City
+		dataType: string
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [City]
+
+	column Region
+		dataType: string
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Region]
+
+	partition Region = calculated
+		mode: import
+		source = ```
+				DATATABLE(
+					"City Key", INTEGER,
+					"City", STRING,
+					"Region", STRING,
+					{
+						{ 1, "Seattle", "North" },
+						{ 2, "Portland", "North" },
+						{ 3, "Boise", "North" },
+						{ 4, "Miami", "South" },
+						{ 5, "Austin", "South" },
+						{ 6, "Atlanta", "South" },
+						{ 7, "Boston", "East" },
+						{ 8, "NewYork", "East" },
+						{ 9, "Philadelphia", "East" },
+						{ 10, "Denver", "West" },
+						{ 11, "Phoenix", "West" },
+						{ 12, "SanDiego", "West" }
+					}
+				)
+				```

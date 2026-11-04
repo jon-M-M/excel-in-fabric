@@ -1,0 +1,132 @@
+table Sales
+
+	measure 'Sales Amount' = SUM(Sales[Line Amount])
+		formatString: #,0
+
+	measure Quantity = SUM(Sales[Line Quantity])
+		formatString: #,0
+
+	/// State JSON for the Excel in Fabric app (link contract in the Phase 2 plan).
+	measure 'Excel Link JSON' = ```
+			VAR regions =
+				IF(
+					ISFILTERED('Region'[Region]) && NOT ISEMPTY(VALUES('Region'[Region])),
+					"""region"":[" & CONCATENATEX(VALUES('Region'[Region]), """" & 'Region'[Region] & """", ",", 'Region'[Region], ASC) & "]"
+				)
+			VAR years =
+				IF(
+					ISFILTERED('Date'[Year]) && NOT ISEMPTY(VALUES('Date'[Year])),
+					"""year"":[" & CONCATENATEX(VALUES('Date'[Year]), 'Date'[Year], ",", 'Date'[Year], ASC) & "]"
+				)
+			VAR categories =
+				IF(
+					ISFILTERED('Product'[Category]) && NOT ISEMPTY(VALUES('Product'[Category])),
+					"""category"":[" & CONCATENATEX(VALUES('Product'[Category]), """" & 'Product'[Category] & """", ",", 'Product'[Category], ASC) & "]"
+				)
+			VAR parts = FILTER({ (1, regions), (2, years), (3, categories) }, [Value2] <> "")
+			RETURN
+				"{""v"":1,""source"":""sales_demo"",""filters"":{" & CONCATENATEX(parts, [Value2], ",", [Value1], ASC) & "}}"
+			```
+		isHidden
+
+	/// Portal link that opens the app with the filters as deep-link state (base64url, unpadded).
+	measure 'Excel Link' = ```
+			VAR json = [Excel Link JSON]
+			VAR alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+			VAR n = LEN(json)
+			VAR encoded =
+				CONCATENATEX(
+					GENERATESERIES(0, ROUNDUP(n / 3, 0) - 1),
+					VAR i = [Value] * 3
+					VAR has2 = i + 2 <= n
+					VAR has3 = i + 3 <= n
+					VAR v =
+						UNICODE(MID(json, i + 1, 1)) * 65536
+							+ IF(has2, UNICODE(MID(json, i + 2, 1)) * 256)
+							+ IF(has3, UNICODE(MID(json, i + 3, 1)))
+					RETURN
+						MID(alphabet, INT(v / 262144) + 1, 1)
+							& MID(alphabet, MOD(INT(v / 4096), 64) + 1, 1)
+							& IF(has2, MID(alphabet, MOD(INT(v / 64), 64) + 1, 1))
+							& IF(has3, MID(alphabet, MOD(v, 64) + 1, 1)),
+					"",
+					[Value], ASC
+				)
+			RETURN
+				"https://app.fabric.microsoft.com/groups/<WORKSPACE_ID>/appbackends/<APP_ITEM_ID>?ctid=<TENANT_ID>&experience=power-bi&extensionScenario=openArtifact&fabricAppState=v1." & encoded
+			```
+		dataCategory: WebUrl
+
+	/// Fallback: the app's hosting URL with the filters as a query string.
+	measure 'Excel Link Direct' = ```
+			"https://<APP_HOSTING_URL>/?source=sales_demo"
+				& IF(ISFILTERED('Region'[Region]), CONCATENATEX(VALUES('Region'[Region]), "&region=" & 'Region'[Region], "", 'Region'[Region], ASC))
+				& IF(ISFILTERED('Date'[Year]), CONCATENATEX(VALUES('Date'[Year]), "&year=" & 'Date'[Year], "", 'Date'[Year], ASC))
+				& IF(ISFILTERED('Product'[Category]), CONCATENATEX(VALUES('Product'[Category]), "&category=" & 'Product'[Category], "", 'Product'[Category], ASC))
+			```
+		dataCategory: WebUrl
+
+	column Date
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		isHidden
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Date]
+
+	column 'Product Key'
+		dataType: int64
+		formatString: 0
+		isHidden
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Product Key]
+
+	column 'City Key'
+		dataType: int64
+		formatString: 0
+		isHidden
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [City Key]
+
+	column 'Line Quantity'
+		dataType: int64
+		formatString: 0
+		isHidden
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Line Quantity]
+
+	column 'Line Amount'
+		dataType: double
+		formatString: #,0.00
+		isHidden
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [Line Amount]
+
+	partition Sales = calculated
+		mode: import
+		source = ```
+				VAR combos =
+					FILTER(
+						CROSSJOIN(
+							SELECTCOLUMNS(CALENDAR(DATE(2025, 1, 1), DATE(2026, 12, 31)), "Date", [Date]),
+							SELECTCOLUMNS('Product', "Product Key", 'Product'[Product Key], "List Price", 'Product'[List Price]),
+							SELECTCOLUMNS('Region', "City Key", 'Region'[City Key])
+						),
+						MOD(CONVERT([Date], INTEGER) * 11 + [Product Key] * 13 + [City Key] * 17, 70) = 0
+					)
+				VAR withQuantity =
+					ADDCOLUMNS(combos, "Line Quantity", MOD(CONVERT([Date], INTEGER) + [Product Key] * 3 + [City Key], 9) + 1)
+				RETURN
+					SELECTCOLUMNS(
+						withQuantity,
+						"Date", [Date],
+						"Product Key", [Product Key],
+						"City Key", [City Key],
+						"Line Quantity", [Line Quantity],
+						"Line Amount", [Line Quantity] * [List Price]
+					)
+				```

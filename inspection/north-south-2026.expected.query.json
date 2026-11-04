@@ -1,0 +1,1 @@
+{"query":"EVALUATE ROW(\"rows\", CALCULATE(COUNTROWS(SUMMARIZE('Sales', 'Date'[Year], 'Date'[Month], 'Region'[Region], 'Product'[Product])), TREATAS({\"North\", \"South\"}, 'Region'[Region]), TREATAS({2026}, 'Date'[Year])), \"sales\", CALCULATE([Sales Amount], TREATAS({\"North\", \"South\"}, 'Region'[Region]), TREATAS({2026}, 'Date'[Year])))"}

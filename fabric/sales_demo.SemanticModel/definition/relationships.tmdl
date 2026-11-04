@@ -1,0 +1,11 @@
+relationship sales_date
+	fromColumn: Sales.Date
+	toColumn: Date.Date
+
+relationship sales_product
+	fromColumn: Sales.'Product Key'
+	toColumn: Product.'Product Key'
+
+relationship sales_city
+	fromColumn: Sales.'City Key'
+	toColumn: Region.'City Key'

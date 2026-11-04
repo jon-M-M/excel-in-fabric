@@ -1,0 +1,6 @@
+{
+  "enabledPlugins": {
+    "fabric-data-app@power-bi-agentic-development": true,
+    "frontend-design@claude-plugins-official": true
+  }
+}

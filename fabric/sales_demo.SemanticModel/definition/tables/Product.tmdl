@@ -1,0 +1,62 @@
+table Product
+
+	column 'Product Key'
+		dataType: int64
+		formatString: 0
+		isHidden
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Product Key]
+
+	column Product
+		dataType: string
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Product]
+
+	column Category
+		dataType: string
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Category]
+
+	column 'List Price'
+		dataType: double
+		formatString: #,0.00
+		isHidden
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [List Price]
+
+	partition Product = calculated
+		mode: import
+		source = ```
+				DATATABLE(
+					"Product Key", INTEGER,
+					"Product", STRING,
+					"Category", STRING,
+					"List Price", DOUBLE,
+					{
+						{ 1, "Mountain100", "Bikes", 1500 },
+						{ 2, "Road200", "Bikes", 1200 },
+						{ 3, "Touring300", "Bikes", 1000 },
+						{ 4, "Hybrid400", "Bikes", 800 },
+						{ 5, "Kids500", "Bikes", 300 },
+						{ 6, "Jersey", "Clothing", 50 },
+						{ 7, "Gloves", "Clothing", 25 },
+						{ 8, "Jacket", "Clothing", 120 },
+						{ 9, "Shorts", "Clothing", 45 },
+						{ 10, "Socks", "Clothing", 10 },
+						{ 11, "Chain", "Components", 30 },
+						{ 12, "Pedals", "Components", 60 },
+						{ 13, "Saddle", "Components", 55 },
+						{ 14, "Wheel", "Components", 220 },
+						{ 15, "Brakes", "Components", 90 },
+						{ 16, "Helmet", "Accessories", 70 },
+						{ 17, "Lights", "Accessories", 40 },
+						{ 18, "Lock", "Accessories", 35 },
+						{ 19, "Pump", "Accessories", 25 },
+						{ 20, "Bottle", "Accessories", 8 }
+					}
+				)
+				```

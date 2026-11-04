@@ -1,0 +1,3 @@
+{
+  "query": "EVALUATE\nSELECTCOLUMNS(\n    SUMMARIZECOLUMNS(\n        'Date'[Year], 'Date'[Month Number], 'Date'[Month], 'Region'[Region], 'Product'[Product],\n        TREATAS({\"North\", \"South\"}, 'Region'[Region]),\n        TREATAS({2026}, 'Date'[Year]),\n        \"@Quantity\", [Quantity],\n        \"@Sales\", [Sales Amount]\n    ),\n    \"Year\", 'Date'[Year], \"Month\", 'Date'[Month], \"Region\", 'Region'[Region], \"Product\", 'Product'[Product],\n    \"Quantity\", [@Quantity], \"Sales Amount\", [@Sales], \"Month Number\", 'Date'[Month Number]\n)\nORDER BY [Year], [Month Number], [Region], [Product]"
+}

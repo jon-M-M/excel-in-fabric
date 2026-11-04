@@ -1,0 +1,30 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "0c5e1d466f2aaf90",
+  "displayName": "Sales overview",
+  "displayOption": "FitToPage",
+  "height": 720,
+  "width": 1280,
+  "visualInteractions": [
+    {
+      "source": "sales_matrix",
+      "target": "export_to_excel",
+      "type": "NoFilter"
+    },
+    {
+      "source": "sales_matrix",
+      "target": "direct_link",
+      "type": "NoFilter"
+    },
+    {
+      "source": "sales_by_month",
+      "target": "export_to_excel",
+      "type": "NoFilter"
+    },
+    {
+      "source": "sales_by_month",
+      "target": "direct_link",
+      "type": "NoFilter"
+    }
+  ]
+}
