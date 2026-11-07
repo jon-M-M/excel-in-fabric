@@ -13,24 +13,62 @@ together and spin it up in your own tenant.
 > **Not a Microsoft product.** This is a fun side project built on the Fabric Apps preview, not something Microsoft
 > ships or supports.
 
-## What it does
+## Features today
 
 - **Report → app handoff.** The report's **Export to Excel** button is a link built by a DAX measure. It writes the
   current slicer selections (region, year, category) as JSON, base64url-encodes them *in DAX*, and puts them in a
   Fabric app deep link. The app reads them when it opens.
 - **Same data, same security.** The app queries the same semantic model as the report, as the signed-in user,
-  through a Rayfin semantic model connector. The user's permissions on the model, including any row-level security,
-  apply. No extracts, no copies.
+  through a Rayfin semantic model connector. The user's permissions on the model apply (row-level security should too, but
+  that hasn't been tested yet). No extracts, no copies.
 - **An Excel-like sheet**, built by hand in React (no grid or spreadsheet library): ribbon, formula bar, cell
   selection, column resize, fill handle, point-and-click references in formulas, sort, AutoSum, Excel's
   Ctrl+arrow / Ctrl+Home / Ctrl+End shortcuts (with Shift to select), and a status bar with Average / Count / Sum.
 - **Formulas**: `SUM`, `AVERAGE`, `MIN`, `MAX`, `COUNT`, `+ - * /`, parentheses, cell references (`A1`) and ranges
-  (`A1:B10`), with Excel-style errors such as `#DIV/0!`.
+  (`A1:B10`), with Excel-style errors such as `#DIV/0!`. Relative references move when a formula is filled down;
+  absolute ones (`$A$1`) stay put.
 - **Real files in and out.** File → Export writes an `.xlsx` with [ExcelJS](https://github.com/exceljs/exceljs)
   (formulas kept, with their calculated values). File → Open loads a CSV
   ([Papa Parse](https://www.papaparse.com/)).
 
-Limits: 26 columns (A–Z), up to 5,000 rows, and only the five functions above.
+- **Keyboard like Excel**: type to overwrite, F2 to edit in the cell, Enter / Tab to commit and move, Esc to
+  cancel, Delete to clear, arrows and Shift+arrows to move and select.
+
+Limits: 26 columns (A–Z), up to 5,000 rows, one sheet, and only the five functions above. Only **AutoSum**,
+**Sort** and the **File** menu do anything on the ribbon. Every other button is there for the look; hover over one
+and it tells you it's *Available in Excel in Fabric Pro*.
+
+## Ideas for further development
+
+None of this exists yet. These are the likely next steps if the joke ever turns into something useful.
+
+**The sheet**
+- Copy, cut and paste, including pasting a range from real Excel.
+- Undo and redo.
+- Cell formatting: bold, fill and font colour, number formats (currency, percent, decimals), carried into the
+  `.xlsx` export. The ribbon buttons are already there.
+- Select whole rows and columns, Ctrl+A, and freeze the header row.
+- Fill series (1, 2, 3… or Jan, Feb, Mar…) from the fill handle, plus Ctrl+D and Ctrl+R.
+- Export to CSV as well as `.xlsx`.
+
+**Formulas**
+- More functions: `IF`, `ROUND`, `SUMIF`, `COUNTIF`, `AVERAGEIF`, `XLOOKUP`, and text functions such as `CONCAT`
+  and `LEFT`.
+
+**Data and Fabric**
+- Save back to Fabric: keep a sheet in a lakehouse table or Fabric SQL database, so a user's edits and notes live
+  next to the governed data instead of on their desktop.
+- Refresh the sheet from the model without going back to the report.
+- A generic handoff: take whichever slicers the report has, rather than the three hard-coded ones, and let the
+  user pick the columns and measures to bring across.
+- More than one sheet, for example one per selected region.
+- Larger loads, with the grid only drawing the rows on screen.
+- Test row-level security end to end. Permissions already flow through as the signed-in user, but RLS hasn't been
+  tested with a role-restricted user.
+
+**Analysis**
+- A simple PivotTable over the loaded rows.
+- A chart from the selected range.
 
 ## How it works
 
